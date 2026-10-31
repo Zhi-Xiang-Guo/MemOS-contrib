@@ -421,7 +421,7 @@ class MilvusVecDB(BaseVecDB):
 
     def _handle_in_operator(self, field: str, values: list) -> str:
         """Handle IN operator for arrays."""
-        if not isinstance(values, list) or not values:
+        if not isinstance(values, list):
             return ""
 
         formatted_values = [self._format_value(v) for v in values]
