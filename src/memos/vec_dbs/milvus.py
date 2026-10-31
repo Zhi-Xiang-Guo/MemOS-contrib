@@ -586,20 +586,15 @@ class MilvusVecDB(BaseVecDB):
 
     def count(self, collection_name: str, filter: dict[str, Any] | None = None) -> int:
         """Count items in the database, optionally with filter."""
-        if filter:
-            # If there's a filter, use query method
-            expr = self._dict_to_expr(filter) if filter else ""
-            results = self.client.query(
-                collection_name=collection_name,
-                filter=expr,
-                output_fields=["id"],
-            )
-            return len(results)
-        else:
-            # For counting all items, use get_collection_stats for accurate count
-            stats = self.client.get_collection_stats(collection_name)
-            # Extract row count from stats - stats is a dict, not a list
-            return int(stats.get("row_count", 0))
+        # Collection statistics can retain deleted rows until compaction.
+        # Count live matches on the server instead of materializing their IDs.
+        results = self.client.query(
+            collection_name=collection_name,
+            filter=self._dict_to_expr(filter) if filter else "",
+            output_fields=["count(*)"],
+            consistency_level="Strong",
+        )
+        return int(results[0]["count(*)"])
 
     def add(self, collection_name: str, data: list[MilvusVecDBItem | dict[str, Any]]) -> None:
         """
