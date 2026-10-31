@@ -1,3 +1,5 @@
+import json
+
 from typing import Any
 
 from memos.configs.vec_db import MilvusVecDBConfig
@@ -439,7 +441,7 @@ class MilvusVecDB(BaseVecDB):
     def _handle_like_operator(self, field: str, pattern: str) -> str:
         """Handle LIKE operator for string pattern matching."""
         # Convert SQL-like pattern to Milvus-like pattern
-        return f"payload['{field}'] like '{pattern}'"
+        return f"payload['{field}'] like {self._format_value(pattern)}"
 
     def _handle_comparison_operator(self, field: str, operator: str, value: Any) -> str:
         """Handle comparison operators (gte, lte, gt, lt, ne)."""
@@ -456,7 +458,7 @@ class MilvusVecDB(BaseVecDB):
     def _format_value(self, value: Any) -> str:
         """Format value for Milvus expression."""
         if isinstance(value, str):
-            return f"'{value}'"
+            return json.dumps(value, ensure_ascii=False)
         elif isinstance(value, int | float):
             return str(value)
         elif isinstance(value, bool):
