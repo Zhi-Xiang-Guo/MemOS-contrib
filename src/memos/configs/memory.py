@@ -209,6 +209,11 @@ class SimpleTreeTextMemoryConfig(TreeTextMemoryConfig):
 class PreferenceTextMemoryConfig(BaseTextMemoryConfig):
     """Preference memory configuration class."""
 
+    memory_filename: str = Field(
+        "preference_memory.json",
+        description="Filename for storing preference memories",
+    )
+
     extractor_llm: LLMConfigFactory = Field(
         ...,
         default_factory=LLMConfigFactory,

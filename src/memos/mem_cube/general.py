@@ -106,12 +106,34 @@ class GeneralMemCube(BaseMemCube):
                 f"Directory {dir} is not empty. Please provide an empty directory for dumping."
             )
 
-        # Always dump config
-        self.config.to_json_file(os.path.join(dir, self.config.config_filename))
-
         # If no specific memory types specified, dump all
         if memory_types is None:
             memory_types = ["text_mem", "act_mem", "para_mem", "pref_mem"]
+
+        # Check every output before writing config or any memory payload.
+        # Explicit filenames from older configurations may still collide.
+        output_paths = {
+            os.path.normcase(
+                os.path.abspath(os.path.join(dir, self.config.config_filename))
+            ): "config"
+        }
+        for memory_type in memory_types:
+            memory = getattr(self, memory_type)
+            if memory is None:
+                continue
+            filename = getattr(getattr(memory, "config", None), "memory_filename", None)
+            if not isinstance(filename, str):
+                continue
+            output_path = os.path.normcase(os.path.abspath(os.path.join(dir, filename)))
+            if output_path in output_paths:
+                raise MemCubeError(
+                    f"Dump filenames collide for {output_paths[output_path]} and {memory_type}: "
+                    f"{filename}. Configure distinct memory filenames."
+                )
+            output_paths[output_path] = memory_type
+
+        # Always dump config after output validation succeeds.
+        self.config.to_json_file(os.path.join(dir, self.config.config_filename))
 
         # Dump specified memory types
         if "text_mem" in memory_types and self.text_mem:
