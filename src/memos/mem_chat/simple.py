@@ -149,7 +149,9 @@ class SimpleMemChat(BaseMemChat):
         if memories:
             memory_context = "\n\n## Memories:\n"
             for i, memory in enumerate(memories, 1):
-                memory_context += f"{i}. ({memory.metadata.memory_time}) {memory.memory}\n"
+                memory_time = getattr(memory.metadata, "memory_time", None)
+                time_label = f" ({memory_time})" if memory_time else ""
+                memory_context += f"{i}.{time_label} {memory.memory}\n"
             return base_prompt + memory_context
 
         return base_prompt
